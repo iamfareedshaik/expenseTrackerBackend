@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: expensetracker-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: expensetracker
+  template:
+    metadata:
+      labels:
+        app: expensetracker
+    spec:
+      containers:
+        - name: expensetracker-container
+          image: expensetracker:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "4000"
+            - name: HOST
+              value: "localhost"
+            - name: USER
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: PASSWORD
+              value: "admin"
+            - name: DATABASE
+              value: "postgres"
+            - name: JWT_SECRET
+              value: "fareed"
+            - name: JWT_EXPIRE
+              value: "365d"
+            - name: COOKIE_EXPIRE
+              value: "50"
+            - name: REFRESH_TOKEN_SECRET
+              value: "refresh_secrete"
+            - name: REFRESH_JWT_EXPIRE
+              value: "3650d"
+            - name: TOKEN_VERSION
+              value: "v1"
+            - name: NODE_ENV
+              value: "production"
