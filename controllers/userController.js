@@ -1,6 +1,7 @@
 const ErrorHander = require("../utils/errorhander");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
-const { findUser, createUser, findUserByID, createBag, resetMyPassword, updateMypassword } = require("../config/database");
+const { findUser, createUser, findUserByID, resetMyPassword, updateMypassword } = require("../models/userModel");
+const {createBag} = require("../models/basketModel")
 const sendToken = require("../utils/jwtToken");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
@@ -11,7 +12,6 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   try {
     const user = await findUser(email);
     if (user) {
-      console.log("existing user");
       return next(new ErrorHander("user already exist", 409));
     }
     const salt = await bcrypt.genSalt(10);
@@ -22,7 +22,6 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
       username,
       bcryptPassword
     );
-    console.log(createdUser)
     const {payer_id} = createdUser
     const randomUUID = uuid.v1();
     createBag(randomUUID, 'Bag 1', payer_id)
@@ -51,7 +50,6 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
   if (!isPasswordMatched) {
     return next(new ErrorHander("Invalid email or password", 401));
   }
-
   sendToken(
     {
       user_id: user.payer_id,
@@ -64,7 +62,6 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
 });
 
 const comparePassword = async (frontEndPass, databasePass) => {
-  console.log(frontEndPass, databasePass);
   return await bcrypt.compare(`'${frontEndPass}'`, databasePass);
 };
 
@@ -82,7 +79,6 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
 
 // Get User Detail
 exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
-  console.log("getUserdetails")
   const { payer_id, phonenumber, email, username } = req.user;
   const user = { payer_id, phone:phonenumber, email, name: username };
   res.status(200).json({
@@ -92,11 +88,9 @@ exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.refreshToken = catchAsyncErrors(async (req, res, next) => {
-  console.log("refresh Token hit")
   const { refreshToken } = req.body;
   const decodedData = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
   const user = await findUserByID(decodedData.id);
- 
   sendToken(
     {
       user_id: user.payer_id,
@@ -111,7 +105,6 @@ exports.refreshToken = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
-  console.log("forgot password", req.body)
   const {email, secret} = req.body
   const response = await resetMyPassword(email, secret)
   let match = false
@@ -125,7 +118,6 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.updatepassword = catchAsyncErrors(async (req, res, next) => {
-  console.log("forgot password", req.body)
   const {email, password, phonenumber} = req.body
   const salt = await bcrypt.genSalt(10);
   const bcryptPassword = await bcrypt.hash(`'${password}'`, salt);

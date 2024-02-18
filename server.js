@@ -1,6 +1,8 @@
+// Config
+require("dotenv").config({ path: "./config/config.env" });
+
 const app = require("./app");
 const {connectDatabase} = require("./config/database");
-
 
 // Handling Uncaught Exception
 process.on("uncaughtException", (err) => {
@@ -9,16 +11,11 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
-// Config
-if (process.env.NODE_ENV !== "PRODUCTION") {
-  require("dotenv").config({ path: "./config/config.env" });
-}
-
 // Connecting to database
 connectDatabase();
 
 const server = app.listen(process.env.PORT, () => {
-  console.log(`Server is working on http://localhost:${process.env.PORT}`);
+  console.log(`Server is listening is on ${process.env.PORT}`);
 });
 
 // Unhandled Promise Rejection
