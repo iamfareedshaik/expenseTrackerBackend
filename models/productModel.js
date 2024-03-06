@@ -1,36 +1,50 @@
 const { client } = require("../config/database");
 
 async function executeInTransaction(func) {
-    try {
-        await client.query('BEGIN');
-        const result = await func();
-        await client.query('COMMIT');
-        return result;
-    } catch (e) {
-        await client.query('ROLLBACK');
-        console.error(e);
-        throw e;
-    }
+  try {
+    await client.query("BEGIN");
+    const result = await func();
+    await client.query("COMMIT");
+    return result;
+  } catch (e) {
+    await client.query("ROLLBACK");
+    console.error(e);
+    throw e;
+  }
 }
 
 exports.updateCartProduct = async (productId, uuid) => {
-    return executeInTransaction(async () => {
-        const query = `UPDATE basketproduct
+  return executeInTransaction(async () => {
+    const query = `UPDATE basketproduct
         SET qty = 0
         WHERE uuid = '${uuid}'
         AND qty > 0
         AND productid = ${productId};`;
-        const response = await client.query(query);
-        return response.rows;
-    });
+    const response = await client.query(query);
+    return response.rows;
+  });
+};
+
+exports.updateProductPrice = async (productId, uuid, amount) => {
+  return executeInTransaction(async () => {
+    const query = `UPDATE basketproduct
+        SET price = ${amount}
+        WHERE uuid = '${uuid}'
+        AND qty > 0
+        AND productid = ${productId};`;
+    console.log(query);
+    const response = await client.query(query);
+    return response.rows;
+  });
 };
 
 exports.getCartitems = async (uuid) => {
-    return executeInTransaction(async () => {
-        const query = `SELECT
+  return executeInTransaction(async () => {
+    const query = `SELECT
         p.productId,
         p.name,
         p.image,
+        p.category,
         bp.qty,
         bp.units,
         bp.price
@@ -42,22 +56,23 @@ exports.getCartitems = async (uuid) => {
         bp.qty > 0 and bp.uuid = '${uuid}'
     ORDER BY 
         p.name`;
-        const response = await client.query(query);
-        return response.rows;
-    });
+    console.log(query);
+    const response = await client.query(query);
+    return response.rows;
+  });
 };
 
 exports.getCategory = async () => {
-    return executeInTransaction(async () => {
-        const query = `select * from category`;
-        const response = await client.query(query);
-        return response.rows;
-    });
+  return executeInTransaction(async () => {
+    const query = `select * from category`;
+    const response = await client.query(query);
+    return response.rows;
+  });
 };
 
 exports.getcategoryItems = async (category, uuid) => {
-    return executeInTransaction(async () => {
-        const query = `SELECT
+  return executeInTransaction(async () => {
+    const query = `SELECT
         p.productId,
         p.name,
         p.image,
@@ -72,30 +87,23 @@ exports.getcategoryItems = async (category, uuid) => {
         bp.uuid = '${uuid}' and p.category = '${category}'
     ORDER BY 
         p.name`;
-        const response = await client.query(query);
-        return response.rows;
-    });
+    const response = await client.query(query);
+    return response.rows;
+  });
 };
 
-exports.getSearchItems = async (uuid, text) => {
-    return executeInTransaction(async () => {
-        const query = `SELECT
-        p.productId,
-        p.name,
-        p.image,
-        bp.qty,
-        bp.units,
-        bp.price
-    FROM
-        Product p
-    JOIN
-        BasketProduct bp ON p.productId = bp.productId
-    WHERE
-        bp.uuid = '${uuid}'
-        AND p.name ILIKE '%${text}%'
-    ORDER BY 
-        p.name`;
-        const response = await client.query(query);
-        return response.rows;
-    });
+exports.uploadProduct = async (name, image_name, bucket, uuid) => {
+  return executeInTransaction(async () => {
+    const query = `insert into product(name, image, category) values ('${name}','${image_name}','${bucket}') RETURNING productid`;
+    const response = await client.query(query);
+    const productId = response.rows[0].productid;
+    console.log(response.rows[0]);
+    console.log(productId);
+    console.log(uuid);
+    const query2 = `INSERT INTO BasketProduct (uuid, productid)
+                    values('${uuid}',${productId});`;
+    console.log(query2);
+    await client.query(query2);
+    console.log(query2);
+  });
 };

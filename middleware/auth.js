@@ -1,11 +1,10 @@
 const ErrorHander = require("../utils/errorhander");
 const catchAsyncErrors = require("./catchAsyncErrors");
 const jwt = require("jsonwebtoken");
-const {findUserByID} = require("../models/userModel");
+const { findUserByID } = require("../models/userModel");
 
 exports.isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
-  const token = req.headers['authorization'];
-
+  const token = req.headers["authorization"];
   if (!token) {
     return next(new ErrorHander("Please Login to access this resource", 401));
   }
@@ -16,7 +15,7 @@ exports.isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
     next();
   } catch (error) {
     // Token verification failed
-    if (error.name === 'TokenExpiredError') {
+    if (error.name === "TokenExpiredError") {
       // Token has expired, handle accordingly (e.g., initiate refresh)
       return next(new ErrorHander("Token has expired", 401));
     } else {

@@ -21,7 +21,7 @@ exports.findUser = async (email) => {
     });
 };
 
-exports.createUser = async (phoneNumber, email, username, password) => {
+exports.createUser = async (phoneNumber, email, username, password, secret) => {
     return executeInTransaction(async () => {
         const findPhone = `select payer_id from participants where phonenumber = '${phoneNumber}'`;
         const userId = await client.query(findPhone);
@@ -29,7 +29,7 @@ exports.createUser = async (phoneNumber, email, username, password) => {
         if (userId.rows[0]) {
             query = `update participants set email = '${email}', username='${username}', password='${password}' where payer_id = ${userId.rows[0].payer_id}`;
         } else {
-            query = `INSERT INTO PARTICIPANTS (phonenumber, email,username, password) VALUES ('${phoneNumber}', '${email}','${username}' ,'${password}') `;
+            query = `INSERT INTO PARTICIPANTS (phonenumber, email,username, password, secret) VALUES ('${phoneNumber}', '${email}','${username}' ,'${password}', '${secret}') `;
         }
         await client.query(query);
         const query2 = `select * From participants where email='${email}'`;
